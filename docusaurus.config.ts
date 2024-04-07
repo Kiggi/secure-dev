@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Secure Development Guide',
-  tagline: 'Secure software needs secure development',
+  tagline: 'How to secure your development process and the machines your app runs on.',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here

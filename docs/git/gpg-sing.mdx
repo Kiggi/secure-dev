@@ -1,0 +1,180 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Signing your commits using GPG
+
+<details>
+  <summary>Sources and further reading</summary>
+  - [GitHub documentation on managing commit signature verification](https://docs.github.com/de/authentication/managing-commit-signature-verification)
+  - [How I got Linus Torvalds in my contributors on GitHub](https://dev.to/martiliones/how-i-got-linus-torvalds-in-my-contributors-on-github-3k4g)
+  - [The GNU privacy handbook](https://www.gnupg.org/gph/en/manual/book1.html)
+</details>
+
+Git includes some functionality of signing your commit with your own GPG certificate. This leads to your commit being means that the code you wrote and uploaded to the Git server can actually be associated with you.
+
+To do this you need to do the following:
+
+1. [Install GnuPG on your machine](#1-installing-gnupg-on-your-machine)
+2. [Generate a GPG key chain](#2-generate-a-gpg-keychain)
+3. [Add your public key](#3-add-your-public-key)
+4. [Configure Git](#4-configure-git)
+
+GitHub has some [great documentation](https://docs.github.com/de/authentication/managing-commit-signature-verification) on this, which served as a source for this guide. However, this guide includes my additions of what I learned troubleshooting after going through the GitHub guide.
+
+## Background information
+
+### Why do I need this?
+
+Without a signature, Git has no way of knowing, if the person committing their changes is actually the person they claim to be. You just configure your name and email address in the Git config and the program just believes you. Even when pushing to the server, your identity in the commit is not checked. The only reason you need to log in to the Git server is to show, that you have write permission to push code on the branch you are trying to push on. The commits you are pushing are not touched by this.
+
+This has some good reasoning behind it. Namely, if you want to migrate your code from one Git server to another or create a fork of a repository, you just clone the repository and push it to an empty repository or branch. In these cases, Git cannot know, if you manipulated the commits or not.
+
+Therefore anyone knowing your email address could be committing code right now in your name without your knowledge. Like [this example, where a developer shows how to commit code in the name of Linus Torvalds, the creator of the Linux operating system](https://dev.to/martiliones/how-i-got-linus-torvalds-in-my-contributors-on-github-3k4g).
+
+Since GPG is free software and signing your commit takes literal seconds after you have set it up, there is not really a good reason not to do it. It is a small step to make sure, that the code you wrote is actually associated with you and not someone else. It is also a good way to make sure, that no one can change your code after you committed it without your knowledge. 
+
+### How does it work?
+
+By signing your Git commits using your private key, the Git server can later use your trusted public key to make sure, that no one committed code in your name or changed your committed code afterwards without your knowledge.
+
+## 1. Installing GnuPG on your machine
+
+GnuPG is available for all major operating systems. It is an asynchronous encryption library, most commonly used for digital encryption of documents or e-mails (PGP).
+
+To install the tool, just run the following command:
+
+<Tabs groupId="operating-systems">
+  <TabItem value="win" label="Windows">
+    ```shell
+      winget install GnuPG.GnuPG
+    ```
+  </TabItem>
+  <TabItem value="debian" label="Linux (Debian-based)">
+    ```shell
+      sudo apt install gnupg
+    ```
+  </TabItem>
+</Tabs>
+
+## 2. Generate a GPG key chain
+
+To generate a GPG key chain, run the following command:
+
+```shell
+gpg --full-generate-key
+```
+
+You will be prompted to choose a couple of options. You can just press enter to choose the default options. It is strongly recommended to set an expiry date, as this will make sure, that if your private key is compromised and you have to declare it as untrusted, not all of your commits are affected, as only the commits signed with the compromised key will become untrusted again. This also leads to you having to renew your key every now and then, but that is probably worth it.
+
+:::note
+The key chain is associated with an email address. Make sure to use the same email address in your Git account settings and in your local Git config. If you use multiple email addresses, you need to create a key chain for each email address you use and upload them to the associated Git accounts. Extensions like [Git Config User Profile](https://marketplace.visualstudio.com/items?itemName=onlyutkarsh.git-config-user-profiles) for Visual Studio Code can help you manage multiple Git profiles including updating the associated email address and signing key.
+
+If the email address you use to commit is different from the email address you associated to the GPG key, your commit will still be signed, but the Git server will not be able to verify the signature.
+:::
+
+:::warning
+Use a strong passphrase! The private key is stored on your machine and can be used to sign commits in your name. If someone gets access to your private key, they can sign commits in your name. Therefore, use a strong passphrase to encrypt and protect your private key.
+:::
+
+After creating your key chain, you can list all your keys with the following command:
+
+```shell
+gpg --list-secret-keys --keyid-format=long
+```
+
+You will see a list of keys. The key you are looking for is the one with the `sec` tag. It should look something like this:
+
+```shell
+sec   rsa4096/1234567890ABCDEF 2024-01-01 [SC]
+```
+
+Copy the ID of your key, you will need it in the next step. In this example the ID is `1234567890ABCDEF`.
+
+## 3. Add your public key
+
+Now you need to add your public key to your account on the Git server (GitHub, GitLab or whichever you are using). To do this, you need to export your public key. Run the following command:
+
+```shell
+gpg --armor --export 1234567890ABCDEF
+```
+
+Replace `1234567890ABCDEF` with the ID of your key, which you copied in the previous step.
+
+Copy the output of this command and paste it into the GPG key field in your account settings (On GitHub this is under: `Settings -> Access -> SSH and GPG keys`). You also need to copy the start and end of the key, which should look like this:
+
+```shell
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+<your-public-key>
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+For GitHub, you can also enable **Vigilant mode** in the GPG settings, which will require all commits to be signed with a GPG key. Otherwise the commits will be marked as unverified.
+
+## 4. Configure Git
+
+After uploading your public key to the Git server, you now need to tell your local Git installation to use your GPG key to sign your commits and tags. To do this, you need to run the following commands:
+
+```shell
+git config --global commit.gpgSign true
+git config --global tag.gpgSign true
+```
+
+This tells Git to sign all commits and tags with your GPG key. You also need to tell Git which key to use. To do this, you can either run this command to set the key for all commits on your machine:
+
+```shell
+git config --global user.signingkey 1234567890ABCDEF
+```
+
+Or you can use an extension like [Git Config User Profile](https://marketplace.visualstudio.com/items?itemName=onlyutkarsh.git-config-user-profiles) for Visual Studio Code to manage multiple Git profiles (including a signing key associated with the profile).
+
+On Windows, for some reason, there is a problem with Git finding the GPG software. To fix this, you need to add the path to the GPG software to the Git config manually. To do this, run **one of** the following command (depending on where you installed GnuPG):
+
+```shell
+git config --global gpg.program "C:\Program Files (x86)\GnuPG\bin\gpg.exe"
+git config --global gpg.program "C:\Program Files (x86)\gnupg\bin\gpg.exe"
+```
+
+## Finishing remarks
+
+After following these steps, your commits and tags will be signed with your GPG key. You can verify this by committing changes to a repo and look into the commit history on the Git server. You should see a `Verified` badge next to your commit.
+
+### Troubleshooting
+
+If you get this error:
+
+```
+git error: cannot spawn --global: No such file or directory
+error: gpg failed to sign the data
+fatal: failed to write commit object
+```
+
+while committing after you have enabled `commit.gpgSign`, take a look at your Git configuration. You can do this by running the following command:
+
+```shell
+git config --list
+```
+
+This will show you all the configuration options Git has set. Look for the `user.signingkey` and `gpg.program` options. If they are not set, you need to set them manually. Also make sure, that you did not accidentally set the `gpg.program` option to the wrong path.
+
+If you still have problems, you can try to run the following command to see, if GPG is working correctly and can sign using your key:
+
+```shell
+echo "test" | gpg --clearsign
+```
+
+This should output a signed message something like this:
+
+```
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+test
+-----BEGIN PGP SIGNATURE-----
+
+iEYEARECAAYFAjdYCQoACgkQJ9S6ULt1dqz6IwCfQ7wP6i/i8HhbcOSKF4ELyQB1
+oCoAoOuqpRqEzr4kOkQqHRLE/b8/Rw2k
+=y6kj
+-----END PGP SIGNATURE-----
+```
+
+If it does not, you need to make sure your gpg installation is working correctly.
