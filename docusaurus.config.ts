@@ -38,14 +38,10 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/kiggi/secure-dev/tree/main/',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -56,11 +52,11 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    // image: 'img/docusaurus-social-card.jpg',
     navbar: {
       title: 'Secure Dev Guide',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Lock and key icon',
         src: 'img/logo.svg',
       },
       items: [
@@ -81,28 +77,11 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Guides',
           items: [
             {
-              label: 'Guides',
-              to: '/docs/intro',
-            },
-          ],
-        },
-        {
-          title: 'Community',
-          items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
+              label: 'Git',
+              to: '/docs/category/git',
             },
           ],
         },
@@ -111,12 +90,12 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/kiggi/secure-dev',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Kilian Brandner`,
+      copyright: `Copyright © ${new Date().getFullYear()} Kilian Brandner. Logo from <a href="https://github.com/microsoft/fluentui-emoji">Microsoft FluentUI Emojis</a>. Created with <a href="https://docusaurus.io/">Docusaurus</a>.`,
     },
     prism: {
       theme: prismThemes.github,
